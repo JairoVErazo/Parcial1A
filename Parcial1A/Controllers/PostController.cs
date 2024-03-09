@@ -19,34 +19,76 @@ namespace Parcial1A.Controllers
 
         // GET: api/<PostController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            List<Post> post = new List<Post>(from e in autoresdbContext.Posts select e).ToList();
+            if (post.Count == 0)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(post);
+            }
         }
 
-        // GET api/<PostController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
+     
+        
+        
         // POST api/<PostController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Route("Add")]
+        public IActionResult Post([FromBody] Post post)
         {
+            try
+            {
+                autoresdbContext.Add(post);
+                autoresdbContext.SaveChanges();
+                return Ok(post);
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex.Message);
+            }
         }
 
+
         // PUT api/<PostController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut]
+        [Route("actualizar/{id}")]
+        public IActionResult Put(int id, [FromBody] Post postModificar)
         {
+            Post? postActual = (from e in autoresdbContext.Posts where e.Id == id select e).FirstOrDefault();
+            if (postActual == null)
+            {
+                return NotFound();
+            }
+
+
+            postActual.Titulo = postModificar.Titulo;
+
+
+
+            autoresdbContext.Entry(postActual).State = EntityState.Modified;
+            autoresdbContext.SaveChanges();
+
+            return Ok(postModificar);
         }
 
         // DELETE api/<PostController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public ActionResult Delete(int id)
         {
+            var postAEliminar = autoresdbContext.Posts.Find(id);
+            if (postAEliminar == null)
+            {
+                return NotFound();
+            }
+
+            autoresdbContext.Posts.Remove(postAEliminar);
+            autoresdbContext.SaveChanges();
+            return Ok(postAEliminar);
         }
 
         [HttpGet]

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Parcial1A.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -10,57 +9,83 @@ namespace Parcial1A.Controllers
     [ApiController]
     public class LibrosController : ControllerBase
     {
-        private readonly AutoresdbContext autoresdbContext;
-
-        public LibrosController( AutoresdbContext autoresdbContext)
-        {
-            this.autoresdbContext = autoresdbContext;
-        }
         // GET: api/<LibrosController>
+        private readonly AutoresdbContext _librosContext;
+
+        public LibrosController(AutoresdbContext librosContext)
+        {
+            _librosContext = librosContext;
+        }
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            List<Libro> libros = new List<Libro>(from e in _librosContext.Libros select e).ToList();
+            if (libros.Count == 0)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(libros);
+            }
         }
 
-        // GET api/<LibrosController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<LibrosController>
+       
+        // POST api/<publicacionesController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Route("Add")]
+        public IActionResult Post([FromBody] Libro libros)
         {
+            try
+            {
+                _librosContext.Add(libros);
+                _librosContext.SaveChanges();
+                return Ok(libros);
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex.Message);
+            }
         }
 
-        // PUT api/<LibrosController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        // PUT api/<publicacionesController>/5
+        [HttpPut]
+        [Route("actualizar/{id}")]
+        public IActionResult Put(int id, [FromBody] Libro librosModificar)
         {
+            Libro? librosActual = (from e in _librosContext.Libros where e.Id == id select e).FirstOrDefault();
+            if (librosActual == null)
+            {
+                return NotFound();
+            }
+
+
+            librosActual.Titulo = librosModificar.Titulo;
+            
+
+
+            _librosContext.Entry(librosActual).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            _librosContext.SaveChanges();
+
+            return Ok(librosModificar);
         }
 
-        // DELETE api/<LibrosController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        // DELETE api/<publicacionesController>/5
+        [HttpDelete]
+        [Route("eliminar/{id}")]
+        public IActionResult Delete(int id)
         {
-        }
+            Libro? libros = (from e in _librosContext.Libros where e.Id == id select e).FirstOrDefault();
+            if (libros == null)
+            {
+                return NotFound();
+            }
 
-        [HttpGet]
-        [Route("autor/{nombreDelAutor}")]
-        public ActionResult<Libro> BuscarLibrosPorAutor(string nombreDelAutor)
-        {
-            var librosPorAutor = (from autor in autoresdbContext.Autores
-                                  join autorLibro in autoresdbContext.AutorLibros on autor.Id equals autorLibro.AutorId
-                                  join libro in autoresdbContext.Libros on autorLibro.LibroId equals libro.Id
-                                  where autor.Nombre == nombreDelAutor
-                                  select libro)
-                                  .Distinct()
-                                  .ToList();
-
-            return Ok(librosPorAutor);
+            _librosContext.Libros.Attach(libros);
+            _librosContext.Libros.Remove(libros);
+            _librosContext.SaveChanges();
+            return Ok(id);
         }
     }
 }

@@ -30,30 +30,18 @@ namespace Parcial1A.Controllers
             }
         }
 
-        // GET api/<AutoresController>/5
-        [HttpGet("{id}")]
-        public IActionResult Getbyid(int id)
-        {
-            List<Autore> autores = _autoresContext.Autores.Where(u => u.Id == id).ToList();
-
-            if (autores.Count == 0)
-            {
-                return NotFound();
-            }
-
-            return Ok(autores);
-        }
-
+      
+       
         // POST api/<AutoresController>
         [HttpPost]
         [Route("Add")]
-        public IActionResult Post([FromBody] Autore publicaciones)
+        public IActionResult Post([FromBody] Autore autores)
         {
             try
             {
-                _autoresContext.Add(publicaciones);
+                _autoresContext.Add(autores);
                 _autoresContext.SaveChanges();
-                return Ok(publicaciones);
+                return Ok(autores);
             }
             catch (Exception ex)
             {
@@ -63,15 +51,42 @@ namespace Parcial1A.Controllers
         }
 
         // PUT api/<AutoresController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut]
+        [Route("actualizar/{id}")]
+        public IActionResult Put(int id, [FromBody] Autore autoresModificar)
         {
+            Autore? autoresActual = (from e in _autoresContext.Autores where e.Id == id select e).FirstOrDefault();
+            if (autoresActual == null)
+            {
+                return NotFound();
+            }
+
+
+            autoresActual.Nombre = autoresModificar.Nombre;
+
+
+
+            _autoresContext.Entry(autoresActual).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            _autoresContext.SaveChanges();
+
+            return Ok(autoresModificar);
         }
 
         // DELETE api/<AutoresController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete]
+        [Route("eliminar/{id}")]
+        public IActionResult Delete(int id)
         {
+            Autore? autores = (from e in _autoresContext.Autores where e.Id == id select e).FirstOrDefault();
+            if (autores == null)
+            {
+                return NotFound();
+            }
+
+            _autoresContext.Autores.Attach(autores);
+            _autoresContext.Autores.Remove(autores);
+            _autoresContext.SaveChanges();
+            return Ok(id);
         }
     }
 }

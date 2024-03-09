@@ -17,48 +17,77 @@ namespace Parcial1A.Controllers
         }
         // GET: api/<AutoresLibroController>
         [HttpGet]
-        public IActionResult Get()
+        [Route("/{autorId}/{libroId}")]
+        public ActionResult<AutorLibro> ObtenerOrdenAutorLibro(int autorId, int libroId)
         {
-            List<AutorLibro> autorlibro = new List<AutorLibro>(from e in _autoresdbContext.AutorLibros select e).ToList();
-            if (autorlibro.Count == 0)
-            {
-                return NotFound();
-            }
-            else
-            {
-                return Ok(autorlibro);
-            }
-        }
-        // GET api/<AutoresLibroController>/5
-        [HttpGet("{id}")]
-        public IActionResult Getbyid(int id)
-        {
-            List<AutorLibro> publicaciones = _autoresdbContext.AutorLibros.Where(u => u.AutorId == id).ToList();
+            var ordenAutorLibro = _autoresdbContext.AutorLibros
+                .Where(al => al.AutorId == autorId && al.LibroId == libroId)
+                .Select(al => al.Orden)
+                .FirstOrDefault();
 
-            if (publicaciones.Count == 0)
+            if (ordenAutorLibro == null)
             {
                 return NotFound();
             }
 
-            return Ok(publicaciones);
+            return Ok(ordenAutorLibro);
         }
+
 
         // POST api/<AutoresLibroController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public ActionResult<AutorLibro> AsignarOrdenAutorLibro([FromBody] AutorLibro nuevoOrden)
         {
+            var autorLibroExistente = _autoresdbContext.AutorLibros
+                .FirstOrDefault(al => al.AutorId == nuevoOrden.AutorId && al.LibroId == nuevoOrden.LibroId);
+
+            if (autorLibroExistente == null)
+            {
+                return NotFound();
+            }
+
+            autorLibroExistente.Orden = nuevoOrden.Orden;
+
+            _autoresdbContext.SaveChanges();
+
+            return Ok(autorLibroExistente);
         }
 
         // PUT api/<AutoresLibroController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut]
+        [Route("actualizar/{id}")]
+        public IActionResult Put(int id, [FromBody] AutorLibro autorliModificar)
         {
-        }
+            AutorLibro? autorliActual = (from e in _autoresdbContext.AutorLibros where e.AutorId == id select e).FirstOrDefault();
+            if (autorliActual == null)
+            {
+                return NotFound();
+            }
 
+            autorliActual.LibroId = autorliModificar.   LibroId;
+            autorliActual.Orden = autorliModificar.Orden;
+
+
+            _autoresdbContext.Entry(autorliActual).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            _autoresdbContext.SaveChanges();
+
+            return Ok(autorliModificar);
+        }
         // DELETE api/<AutoresLibroController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete]
+        [Route("eliminar/{id}")]
+        public IActionResult Delete(int id)
         {
+            AutorLibro? autorLibro = (from e in _autoresdbContext.AutorLibros where e.AutorId == id select e).FirstOrDefault();
+            if (autorLibro == null)
+            {
+                return NotFound();
+            }
+
+            _autoresdbContext.AutorLibros.Attach(autorLibro);
+            _autoresdbContext.AutorLibros.Remove(autorLibro);
+            _autoresdbContext.SaveChanges();
+            return Ok(id);
         }
     }
 }
