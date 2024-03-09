@@ -48,6 +48,7 @@ namespace Parcial1A.Controllers
         {
         }
 
+        [HttpGet]
         [Route("autor/{nombreDelAutor}")]
         public ActionResult<Libro> BuscarLibrosPorAutor(string nombreDelAutor)
         {
