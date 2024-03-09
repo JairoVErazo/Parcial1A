@@ -55,7 +55,9 @@ public partial class AutoresdbContext : DbContext
 
         modelBuilder.Entity<Libro>(entity =>
         {
-            entity.Property(e => e.Titulo).HasMaxLength(50);
+            entity.Property(e => e.Titulo)
+                .HasMaxLength(50)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Post>(entity =>

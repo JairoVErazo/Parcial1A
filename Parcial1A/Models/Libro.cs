@@ -7,5 +7,5 @@ public partial class Libro
 {
     public int Id { get; set; }
 
-    public byte[] Titulo { get; set; } = null!;
+    public string Titulo { get; set; } = null!;
 }
